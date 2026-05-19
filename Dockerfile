@@ -3,6 +3,7 @@ FROM python:3.11-slim
 # Prevent Python from writing .pyc files and buffer streams
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV MEDIAPIPE_DISABLE_GPU=1
 
 WORKDIR /app
 
@@ -11,6 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     libgthread-2.0-0 \
+    libgles2 \
+    libegl1 \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
