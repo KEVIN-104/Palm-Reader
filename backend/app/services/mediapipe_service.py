@@ -1,3 +1,7 @@
+import os
+os.environ['GLOG_minloglevel'] = '2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import cv2
 import numpy as np
 import mediapipe as mp
@@ -5,12 +9,12 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from typing import Tuple, Dict, Any, List, Optional
 import math
-import os
 import urllib.request
 
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
 MODEL_FILENAME = "hand_landmarker.task"
 MODEL_PATH = os.path.join(os.path.dirname(__file__), MODEL_FILENAME)
+
 
 def download_model_if_needed():
     """Downloads the MediaPipe hand landmarker model file if not present locally."""
@@ -233,3 +237,12 @@ class MediaPipeService:
             cv2.circle(img_copy, (lm[0], lm[1]), 5, (0, 255, 0), -1)  # Green joint circle
             
         return img_copy
+
+    def close(self):
+        """Explicitly close the MediaPipe HandLandmarker detector to free native resources."""
+        if hasattr(self, 'detector') and self.detector is not None:
+            try:
+                self.detector.close()
+            except Exception as e:
+                pass
+

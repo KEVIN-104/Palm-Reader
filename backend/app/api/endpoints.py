@@ -16,10 +16,8 @@ from backend.app.services.llm_service import LLMService
 
 router = APIRouter()
 
-# Instantiate services
-mp_service = MediaPipeService()
-cv_service = OpenCVService()
-llm_service = LLMService()
+# Services are lazy-loaded via request.app.state during requests
+
 
 def map_db_to_response(db_reading: PalmReading) -> PalmReadingResponse:
     """Helper to transform database model to Pydantic Response schema."""
@@ -111,99 +109,128 @@ async def analyze_palm_image(
     Main endpoint for hand palm analysis.
     Validates quality, runs MediaPipe & OpenCV, gets AI interpretations, and stores locally.
     """
-    # 1. Read file bytes
-    file_bytes = await file.read()
-    if len(file_bytes) == 0:
-        raise HTTPException(status_code=400, detail="Empty file upload.")
+    # 1. Retrieve lazy-loaded services from app state
+    mp_service = request.app.state.mp_service
+    cv_service = request.app.state.cv_service
+    llm_service = request.app.state.llm_service
 
-    # Decode image with OpenCV
-    nparr = np.frombuffer(file_bytes, np.uint8)
-    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    file_bytes = None
+    img_bgr = None
+    cropped_palm = None
+    cv_data = None
+    crop_bytes = None
 
-    if img_bgr is None:
-        raise HTTPException(status_code=400, detail="Invalid image file format.")
+    try:
+        # 1. Read file bytes
+        file_bytes = await file.read()
+        if len(file_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Empty file upload.")
 
-    # 2. Quality checking (blur, brightness)
-    is_valid, msg = mp_service.validate_image_quality(img_bgr)
-    if not is_valid:
-        raise HTTPException(status_code=400, detail=msg)
+        # Decode image with OpenCV
+        nparr = np.frombuffer(file_bytes, np.uint8)
+        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-    # 3. MediaPipe Landmark detection
-    hand_data = mp_service.detect_hand(img_bgr)
-    if not hand_data:
-        raise HTTPException(
-            status_code=400, 
-            detail="No hand detected. Please make sure your hand is fully visible, well lit, and centered in the frame."
+        if img_bgr is None:
+            raise HTTPException(status_code=400, detail="Invalid image file format.")
+
+        # 2. Quality checking (blur, brightness)
+        is_valid, msg = mp_service.validate_image_quality(img_bgr)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=msg)
+
+        # 3. MediaPipe Landmark detection
+        hand_data = mp_service.detect_hand(img_bgr)
+        if not hand_data:
+            raise HTTPException(
+                status_code=400, 
+                detail="No hand detected. Please make sure your hand is fully visible, well lit, and centered in the frame."
+            )
+
+        # 4. Crop and rotate palm
+        cropped_palm, crop_meta = mp_service.align_and_crop_palm(img_bgr, hand_data)
+        if cropped_palm is None or cropped_palm.size == 0:
+            raise HTTPException(status_code=500, detail="Palm alignment failed.")
+
+        # 5. Extract features using OpenCV
+        cv_data = cv_service.process_palm(cropped_palm, crop_meta["cropped_landmarks"], crop_meta["hand_label"])
+        
+        # 6. Save image files
+        file_id = str(uuid.uuid4())
+        orig_filename = f"{file_id}_original.jpg"
+        anal_filename = f"{file_id}_analyzed.jpg"
+        
+        orig_path = os.path.join(settings.UPLOAD_DIR, orig_filename)
+        anal_path = os.path.join(settings.ANALYZED_DIR, anal_filename)
+        
+        cv2.imwrite(orig_path, img_bgr)
+        cv2.imwrite(anal_path, cv_data["overlay_img"])
+
+        # Encode cropped palm for vision model
+        _, crop_buf = cv2.imencode('.jpg', cropped_palm)
+        crop_bytes = crop_buf.tobytes()
+
+        # 7. Get local AI interpretation (using LLM service)
+        ai_analysis = await llm_service.get_reading(cv_data, crop_bytes)
+
+        # 8. Save to Database
+        db_reading = PalmReading(
+            client_ip=request.client.host if request.client else "127.0.0.1",
+            original_image_path=orig_path,
+            analyzed_image_path=anal_path,
+            confidence_score=cv_data["confidence_score"],
+            hand_type=crop_meta["hand_label"],
+            palm_shape=cv_data["palm_shape"],
+            life_line_data={
+                "length": cv_data["life_line"]["length"],
+                "depth": cv_data["life_line"]["depth"],
+                "curvature": cv_data["life_line"]["curvature"],
+                "clarity": cv_data["life_line"]["clarity"]
+            },
+            heart_line_data={
+                "length": cv_data["heart_line"]["length"],
+                "depth": cv_data["heart_line"]["depth"],
+                "curvature": cv_data["heart_line"]["curvature"],
+                "clarity": cv_data["heart_line"]["clarity"]
+            },
+            head_line_data={
+                "length": cv_data["head_line"]["length"],
+                "depth": cv_data["head_line"]["depth"],
+                "curvature": cv_data["head_line"]["curvature"],
+                "clarity": cv_data["head_line"]["clarity"]
+            },
+            fate_line_data={
+                "length": cv_data["fate_line"]["length"],
+                "depth": cv_data["fate_line"]["depth"],
+                "curvature": cv_data["fate_line"]["curvature"],
+                "clarity": cv_data["fate_line"]["clarity"]
+            },
+            mounts_data=cv_data["mounts"],
+            finger_lengths=cv_data["finger_lengths"],
+            ai_analysis=ai_analysis
         )
 
-    # 4. Crop and rotate palm
-    cropped_palm, crop_meta = mp_service.align_and_crop_palm(img_bgr, hand_data)
-    if cropped_palm is None or cropped_palm.size == 0:
-        raise HTTPException(status_code=500, detail="Palm alignment failed.")
+        db.add(db_reading)
+        db.commit()
+        db.refresh(db_reading)
 
-    # 5. Extract features using OpenCV
-    cv_data = cv_service.process_palm(cropped_palm, crop_meta["cropped_landmarks"], crop_meta["hand_label"])
-    
-    # 6. Save image files
-    file_id = str(uuid.uuid4())
-    orig_filename = f"{file_id}_original.jpg"
-    anal_filename = f"{file_id}_analyzed.jpg"
-    
-    orig_path = os.path.join(settings.UPLOAD_DIR, orig_filename)
-    anal_path = os.path.join(settings.ANALYZED_DIR, anal_filename)
-    
-    cv2.imwrite(orig_path, img_bgr)
-    cv2.imwrite(anal_path, cv_data["overlay_img"])
+        return map_db_to_response(db_reading)
 
-    # Encode cropped palm for vision model
-    _, crop_buf = cv2.imencode('.jpg', cropped_palm)
-    crop_bytes = crop_buf.tobytes()
+    finally:
+        # Close upload spool file to release descriptor and buffer memory
+        try:
+            await file.close()
+        except Exception:
+            pass
+        # Clean up temporary large variables to assist garbage collection
+        del file_bytes
+        del img_bgr
+        del cropped_palm
+        del cv_data
+        del crop_bytes
+        
+        import gc
+        gc.collect()
 
-    # 7. Get local AI interpretation (using LLM service)
-    ai_analysis = await llm_service.get_reading(cv_data, crop_bytes)
-
-    # 8. Save to Database
-    db_reading = PalmReading(
-        client_ip=request.client.host if request.client else "127.0.0.1",
-        original_image_path=orig_path,
-        analyzed_image_path=anal_path,
-        confidence_score=cv_data["confidence_score"],
-        hand_type=crop_meta["hand_label"],
-        palm_shape=cv_data["palm_shape"],
-        life_line_data={
-            "length": cv_data["life_line"]["length"],
-            "depth": cv_data["life_line"]["depth"],
-            "curvature": cv_data["life_line"]["curvature"],
-            "clarity": cv_data["life_line"]["clarity"]
-        },
-        heart_line_data={
-            "length": cv_data["heart_line"]["length"],
-            "depth": cv_data["heart_line"]["depth"],
-            "curvature": cv_data["heart_line"]["curvature"],
-            "clarity": cv_data["heart_line"]["clarity"]
-        },
-        head_line_data={
-            "length": cv_data["head_line"]["length"],
-            "depth": cv_data["head_line"]["depth"],
-            "curvature": cv_data["head_line"]["curvature"],
-            "clarity": cv_data["head_line"]["clarity"]
-        },
-        fate_line_data={
-            "length": cv_data["fate_line"]["length"],
-            "depth": cv_data["fate_line"]["depth"],
-            "curvature": cv_data["fate_line"]["curvature"],
-            "clarity": cv_data["fate_line"]["clarity"]
-        },
-        mounts_data=cv_data["mounts"],
-        finger_lengths=cv_data["finger_lengths"],
-        ai_analysis=ai_analysis
-    )
-
-    db.add(db_reading)
-    db.commit()
-    db.refresh(db_reading)
-
-    return map_db_to_response(db_reading)
 
 
 @router.get("/history", response_model=List[HistoryResponse])
