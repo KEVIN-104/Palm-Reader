@@ -1064,6 +1064,182 @@
             box-shadow: 0 0 10px var(--primary-glow);
         }
 
+        /* Pricing & Licensing Styles */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .pricing-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0.8;
+        }
+
+        .pricing-card.premium-tier::before {
+            background: linear-gradient(90deg, #f59e0b, #ec4899);
+        }
+
+        .pricing-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+        }
+
+        .pricing-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-badge {
+            display: inline-block;
+            padding: 0.35rem 0.85rem;
+            background: rgba(139, 92, 246, 0.15);
+            color: #c084fc;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .pricing-badge.api-badge {
+            background: rgba(6, 182, 212, 0.15);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .pricing-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-price-box {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .pricing-currency {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .pricing-price {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1;
+            background: linear-gradient(to right, #ffffff, #e9d5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pricing-period {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .pricing-features-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .pricing-feature-item i {
+            color: var(--emerald);
+            font-size: 1.1rem;
+        }
+
+        .pricing-contact-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .pricing-contact-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pricing-contact-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(139, 92, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+
+        .pricing-contact-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .pricing-contact-mail {
+            font-family: monospace;
+            color: var(--secondary);
+            font-size: 1.05rem;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pricing-contact-mail:hover {
+            color: white;
+            text-shadow: 0 0 10px var(--secondary-glow);
+        }
+
         /* Error Overlay/Alerts */
         .error-alert {
             background: rgba(239, 68, 68, 0.1);
@@ -1177,7 +1353,7 @@
                         <i class="fa-solid fa-clock-rotate-left"></i> Reading History
                     </button>
                     <button class="nav-btn" onclick="switchTab('setup-tab')">
-                        <i class="fa-solid fa-circle-info"></i> Local AI Setup
+                        <i class="fa-solid fa-tags"></i> Pricing
                     </button>
                 </nav>
             </div>
@@ -1557,52 +1733,88 @@
                 </div>
             </div>
 
-            <!-- 3. Setup Info Tab -->
+            <!-- 3. Pricing Tab -->
             <div id="setup-tab" class="tab-panel">
                 <header>
                     <div>
-                        <h1>Local AI Server Configuration</h1>
-                        <p class="subtitle">Integrate Ollama to enable fully offline multimodal deep readings.</p>
+                        <h1>Pricing & API Access</h1>
+                        <p class="subtitle">Get lifetime premium access or integrate the AuraPalm computer vision API.</p>
                     </div>
                 </header>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Setup Guide</h3>
-                    <p style="color: var(--text-muted); line-height: 1.5;">To use a true local AI LLM or Multimodal vision model instead of the default local CV heuristics rule engine, follow these steps:</p>
-                    
-                    <div class="setup-guide-list">
-                        <div class="guide-step">
-                            <div class="guide-step-num">1</div>
-                            <div class="guide-step-body">
-                                <span class="guide-step-title">Install Ollama</span>
-                                <span class="guide-step-desc">Download and install Ollama from <a href="https://ollama.com" target="_blank" style="color: var(--secondary);">ollama.com</a> for Windows, macOS, or Linux.</span>
+                <div class="pricing-grid">
+                    <!-- Lifetime Access Tier -->
+                    <div class="pricing-card premium-tier">
+                        <div class="pricing-header">
+                            <span class="pricing-badge">Lifetime Pass</span>
+                            <h2 class="pricing-title">Lifetime Access</h2>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Perfect for personal use and deep chiromancy readings.</p>
+                            <div class="pricing-price-box">
+                                <span class="pricing-currency">₹</span>
+                                <span class="pricing-price">5,000</span>
+                                <span class="pricing-period">/ lifetime</span>
                             </div>
                         </div>
 
-                        <div class="guide-step">
-                            <div class="guide-step-num">2</div>
-                            <div class="guide-step-body">
-                                <span class="guide-step-title">Download local Vision Model (Recommended)</span>
-                                <span class="guide-step-desc">Open your terminal and pull a high-performance vision model (e.g. Qwen2-VL or Llava):</span>
-                                <div class="code-block">
-                                    <span>ollama run qwen2-vl</span>
-                                    <button onclick="navigator.clipboard.writeText('ollama run qwen2-vl')"><i class="fa-regular fa-copy"></i></button>
-                                </div>
+                        <ul class="pricing-features-list">
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Unlimited high-resolution palm scans</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Deep computer vision line mapping</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> SQLite historical reading archives</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Automated LLM / local rules analysis</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Offline capabilities with local AI models</li>
+                        </ul>
+
+                        <a href="mailto:kavathiyaravi98@gmail.com?subject=AuraPalm%20Lifetime%20Access%20Inquiry" class="btn" style="text-align: center; text-decoration: none; width: 100%; box-sizing: border-box; background: linear-gradient(135deg, #f59e0b, #ec4899); border: none;">
+                            <i class="fa-solid fa-gem"></i> Buy Lifetime Access
+                        </a>
+                    </div>
+
+                    <!-- Developer/API Tier -->
+                    <div class="pricing-card">
+                        <div class="pricing-header">
+                            <span class="pricing-badge api-badge">API Integration</span>
+                            <h2 class="pricing-title">Developer License</h2>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">Integrate our palmistry machine learning engine into your product.</p>
+                            <div class="pricing-price-box">
+                                <span class="pricing-price" style="font-size: 2.2rem; background: linear-gradient(to right, #06b6d4, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Custom Quote</span>
                             </div>
                         </div>
 
-                        <div class="guide-step">
-                            <div class="guide-step-num">3</div>
-                            <div class="guide-step-body">
-                                <span class="guide-step-title">Start the Ollama Server</span>
-                                <span class="guide-step-desc">Ollama runs automatically in the background at <code>http://localhost:11434</code>. The server will detect and route request workloads locally on CPU or GPU.</span>
-                            </div>
-                        </div>
+                        <ul class="pricing-features-list">
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Dockerized containerized microservice</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> JSON REST endpoints for image analysis</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Complete MediaPipe coordinates output</li>
+                            <li class="pricing-feature-item"><i class="fa-solid fa-check"></i> Standard API integration support</li>
+                        </ul>
+
+                        <a href="mailto:kavathiyaravi98@gmail.com?subject=AuraPalm%20API%20Access%20Inquiry" class="btn" style="text-align: center; text-decoration: none; width: 100%; box-sizing: border-box;">
+                            <i class="fa-solid fa-code"></i> Request API Access
+                        </a>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 1.25rem;"><i class="fa-solid fa-sliders" style="color: var(--secondary);"></i> Server Settings</h3>
+                <!-- Contact & Queries section -->
+                <div class="pricing-contact-card">
+                    <div class="pricing-contact-header">
+                        <div class="pricing-contact-icon">
+                            <i class="fa-regular fa-envelope"></i>
+                        </div>
+                        <div>
+                            <div class="pricing-contact-title">Have Questions or Queries?</div>
+                            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 2px;">Reach out for license inquiries, partnership opportunities, or API integrations.</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <a href="mailto:kavathiyaravi98@gmail.com" class="pricing-contact-mail">
+                            <i class="fa-solid fa-envelope-open-text"></i> kavathiyaravi98@gmail.com
+                        </a>
+                    </div>
+                </div>
+
+                <!-- API Connection Settings (Subtle bottom card) -->
+                <div class="card" style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-sliders" style="color: var(--secondary);"></i> Developer Connection Console</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Connect this frontend client to your deployed backend (e.g. Render, AWS).</p>
                     
                     <div class="config-input-group" style="margin-bottom: 1.5rem;">
                         <label for="ollama-url-input">Ollama Local API Endpoint</label>
