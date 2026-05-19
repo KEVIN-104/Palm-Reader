@@ -1,0 +1,5 @@
+# Netlify Configuration File
+# This tells Netlify to publish the index.html template from its actual subfolder location.
+
+[build]
+  publish = "backend/app/templates"

@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraPalm AI - Local Palmistry Platform</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #06070d;
+            --bg-surface: rgba(15, 17, 28, 0.7);
+            --bg-surface-opaque: #0f111c;
+            --border-glow: rgba(139, 92, 246, 0.15);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --secondary: #06b6d4;
+            --secondary-glow: rgba(6, 182, 212, 0.4);
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.3);
+            --amber: #f59e0b;
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dark: #6b7280;
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        aside {
+            background: rgba(10, 11, 19, 0.85);
+            border-right: 1px solid var(--border-subtle);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            backdrop-filter: blur(20px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            margin-bottom: 3rem;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .brand-logo i {
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .brand-name {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #ffffff, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.85rem 1.25rem;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: left;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-btn.active {
+            color: white;
+            background: linear-gradient(90deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0) 100%);
+            border-left: 3px solid var(--primary);
+            box-shadow: inset 5px 0 15px rgba(139, 92, 246, 0.05);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--emerald-glow);
+        }
+
+        .status-dot.offline {
+            background-color: var(--text-dark);
+            box-shadow: none;
+        }
+
+        /* Main Workspace Content */
+        main {
+            padding: 2.5rem 3.5rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            overflow-y: auto;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* Tabs Panels */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Card System (Glassmorphism) */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+        }
+
+        /* Upload Tab Styling */
+        .scan-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2.5rem;
+        }
+
+        /* Input Controls Panel */
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 3rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.03);
+            box-shadow: inset 0 0 20px rgba(139, 92, 246, 0.03);
+        }
+
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: translateY(-5px);
+            box-shadow: 0 0 15px var(--primary-glow);
+            color: white;
+            background: var(--primary);
+        }
+
+        .camera-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            background: #000;
+            border: 1px solid var(--border-subtle);
+        }
+
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror camera */
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-guide-outline {
+            width: 70%;
+            height: 75%;
+            border: 2px dashed rgba(255, 255, 255, 0.35);
+            border-radius: 40% 40% 50% 50%;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: var(--transition);
+            flex-grow: 1;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--primary-glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        /* Loading / Processing State */
+        .processing-panel {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            min-height: 400px;
+        }
+
+        .pulse-loader {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 0 25px var(--primary-glow);
+            animation: pulse 1.8s infinite;
+            margin-bottom: 2rem;
+        }
+
+        .processing-steps {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: left;
+            margin-top: 1.5rem;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .step-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        .step-item.active {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .step-item.active .step-icon i {
+            color: var(--primary);
+            animation: spin 1.2s linear infinite;
+        }
+
+        .step-item.done {
+            color: var(--emerald);
+        }
+
+        .step-item.done .step-icon i {
+            color: var(--emerald);
+        }
+
+        /* Results Tab Styling */
+        .results-container {
+            display: none;
+            grid-template-columns: 1.1fr 1.3fr;
+            gap: 2.5rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-image-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            align-self: flex-start;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.35rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .toggle-opt {
+            flex-grow: 1;
+            text-align: center;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition);
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .toggle-opt.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.25);
+        }
+
+        .palm-display-frame {
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            aspect-ratio: 1;
+            position: relative;
+            background: #090a10;
+        }
+
+        .palm-display-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Interactive Diagram/Reading Panel */
+        .reading-details-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .metrics-summary-bar {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* Radial Confidence Meter */
+        .radial-meter {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .radial-meter svg {
+            transform: rotate(-90deg);
+        }
+
+        .radial-meter-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 8;
+        }
+
+        .radial-meter-fill {
+            fill: none;
+            stroke: url(#cyan-purple-grad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .radial-meter-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .radial-meter-num {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
+
+        .radial-meter-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        /* Hand Attributes badges */
+        .attr-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .attr-pill {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .attr-pill i {
+            color: var(--primary);
+        }
+
+        .attr-pill.element i {
+            color: var(--secondary);
+        }
+
+        /* Energy Profile (Progress Bars) */
+        .energy-profile {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .energy-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .energy-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .energy-name {
+            color: var(--text-muted);
+        }
+
+        .energy-val {
+            color: white;
+            font-weight: 600;
+        }
+
+        .progress-track {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        /* Sections: Personality, Career, etc. */
+        .reading-section-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 0.5rem;
+        }
+
+        .reading-section-title i {
+            color: var(--primary);
+        }
+
+        .reading-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-main);
+            margin-bottom: 1.25rem;
+            text-align: justify;
+        }
+
+        .takeaway-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .takeaway-item {
+            position: relative;
+            padding-left: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .takeaway-item::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Accordion tabs for specific lines */
+        .lines-accordion {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .accordion-header {
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+
+        .accordion-header:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .accordion-title-block {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .line-badge {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .accordion-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .accordion-summary-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .accordion-summary-stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 1.25rem;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(0,0,0,0.25);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .accordion-content.active {
+            display: block;
+        }
+
+        .line-metrics-table {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            text-align: center;
+        }
+
+        .metric-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .metric-cell-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            letter-spacing: 0.5px;
+        }
+
+        .metric-cell-val {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Mounts Map Grid */
+        .mounts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .mount-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 0.85rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mount-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .mount-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 600;
+            align-self: center;
+        }
+
+        .mount-badge.prominent {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .mount-badge.balanced {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .mount-badge.quiet {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* History Tab Grid */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .history-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .history-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+        }
+
+        .history-img-frame {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .history-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .history-card:hover .history-img {
+            transform: scale(1.05);
+        }
+
+        .history-content {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-grow: 1;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-date {
+            font-size: 0.8rem;
+            color: var(--text-dark);
+        }
+
+        .history-score {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--emerald);
+            background: rgba(16, 185, 129, 0.08);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .history-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .history-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: auto;
+        }
+
+        .history-btn-view {
+            flex-grow: 1;
+            padding: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .history-btn-del {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.6rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .history-btn-del:hover {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+
+        .empty-history-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .empty-history-state i {
+            font-size: 3rem;
+            color: var(--text-dark);
+        }
+
+        /* Local AI Setup Panel */
+        .setup-guide-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .guide-step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .guide-step-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .guide-step-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .guide-step-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .code-block {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-subtle);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .code-block button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .code-block button:hover {
+            color: white;
+        }
+
+        .config-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .config-input-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .config-input-wrapper {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .config-input {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border-subtle);
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            color: white;
+            font-family: monospace;
+            font-size: 0.95rem;
+            flex-grow: 1;
+        }
+
+        .config-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        /* Error Overlay/Alerts */
+        .error-alert {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .error-alert i {
+            margin-top: 2px;
+        }
+
+        /* Print styling for PDF report */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .app-container {
+                display: block;
+            }
+            aside, header, .btn-group, .view-toggle, .history-actions {
+                display: none !important;
+            }
+            main {
+                padding: 0;
+            }
+            .results-container {
+                display: block !important;
+            }
+            .result-image-card {
+                page-break-after: always;
+            }
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideDown {
+            from { height: 0; opacity: 0; }
+            to { height: auto; opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            aside {
+                height: auto;
+                position: relative;
+                padding: 1.5rem;
+            }
+            .brand {
+                margin-bottom: 1.5rem;
+            }
+            nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            main {
+                padding: 1.5rem;
+            }
+            .scan-grid, .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside>
+            <div>
+                <a href="#" class="brand">
+                    <div class="brand-logo">
+                        <i class="fa-solid fa-hand"></i>
+                    </div>
+                    <span class="brand-name">AuraPalm AI</span>
+                </a>
+                
+                <nav>
+                    <button class="nav-btn active" onclick="switchTab('scan-tab')">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Scan Palm
+                    </button>
+                    <button class="nav-btn" onclick="switchTab('history-tab')">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Reading History
+                    </button>
+                    <button class="nav-btn" onclick="switchTab('setup-tab')">
+                        <i class="fa-solid fa-circle-info"></i> Local AI Setup
+                    </button>
+                </nav>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="status-pill">
+                    <div class="status-dot" id="system-status-dot"></div>
+                    <span id="system-status-text">Server Online</span>
+                </div>
+                <div class="status-pill">
+                    <div class="status-dot" id="ollama-status-dot"></div>
+                    <span id="ollama-status-text">Checking Ollama...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main>
+            <!-- 1. Scan/Analysis Tab -->
+            <div id="scan-tab" class="tab-panel active">
+                <header>
+                    <div>
+                        <h1>AI Palm Analysis</h1>
+                        <p class="subtitle">Extract geometric creases, analyze mounts, and decode local AI interpretations.</p>
+                    </div>
+                </header>
+
+                <!-- Error Alert Box -->
+                <div class="error-alert" id="scan-error-alert">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div id="scan-error-message"></div>
+                </div>
+
+                <!-- Input Phase Panel -->
+                <div class="scan-grid" id="input-phase">
+                    <!-- Column 1: Image Capture -->
+                    <div class="input-panel">
+                        <!-- Camera capture box -->
+                        <div class="card" style="padding: 1.25rem; margin-bottom: 0;">
+                            <h3 style="margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-camera" style="color: var(--secondary);"></i> Camera Capture
+                            </h3>
+                            
+                            <div class="camera-container" id="camera-frame">
+                                <video id="camera-video" autoplay playsinline></video>
+                                <div class="camera-overlay">
+                                    <div class="camera-guide-outline">
+                                        Align hand inside outline
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="btn-group" style="margin-top: 1rem;">
+                                <button class="btn btn-secondary" id="toggle-camera-btn" onclick="startCamera()">
+                                    <i class="fa-solid fa-power-off"></i> Start Camera
+                                </button>
+                                <button class="btn" id="capture-photo-btn" onclick="capturePhoto()" disabled>
+                                    <i class="fa-solid fa-circle-dot"></i> Capture Reading
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: File Upload / Drag Zone -->
+                    <div class="input-panel">
+                        <div class="card" style="display: flex; flex-direction: column; justify-content: center; height: 100%; margin-bottom: 0; min-height: 380px;">
+                            <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-file-image" style="color: var(--primary);"></i> Image Upload
+                            </h3>
+
+                            <div class="upload-zone" onclick="triggerFileInput()" id="drop-zone">
+                                <div class="upload-icon">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <p style="font-weight: 500; font-size: 1.05rem;">Drag & drop palm image here</p>
+                                <p style="font-size: 0.85rem; color: var(--text-muted);">Supports JPG, PNG (min 400x400 px)</p>
+                                <p style="font-size: 0.75rem; color: var(--text-dark); background: rgba(255,255,255,0.03); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-subtle);">
+                                    Tip: Place palm flat with fingers spread
+                                </p>
+                                <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="handleFileSelect(event)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing / Loading Phase -->
+                <div class="card processing-panel" id="processing-phase">
+                    <div class="pulse-loader">
+                        <i class="fa-solid fa-hand-sparkles"></i>
+                    </div>
+                    <h2>Processing Palm Analysis</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Please keep your browser active. Extracting features...</p>
+
+                    <div class="processing-steps">
+                        <div class="step-item" id="step-quality">
+                            <span class="step-icon"><i class="fa-solid fa-circle-notch"></i></span>
+                            Validating image focus & quality
+                        </div>
+                        <div class="step-item" id="step-landmarks">
+                            <span class="step-icon"><i class="fa-solid fa-circle-notch"></i></span>
+                            Running MediaPipe Hand tracking
+                        </div>
+                        <div class="step-item" id="step-opencv">
+                            <span class="step-icon"><i class="fa-solid fa-circle-notch"></i></span>
+                            Extracting geometric creases & mounts
+                        </div>
+                        <div class="step-item" id="step-llm">
+                            <span class="step-icon"><i class="fa-solid fa-circle-notch"></i></span>
+                            Generating local AI interpretations
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display Results Panel -->
+                <div class="results-container" id="results-phase">
+                    <!-- Column 1: Image Verification & Diagnostics -->
+                    <div class="result-image-card">
+                        <div class="card" style="padding: 1.25rem; width: 100%; margin-bottom: 0;">
+                            <div class="view-toggle" style="margin-bottom: 1.25rem;">
+                                <div class="toggle-opt active" id="btn-view-analyzed" onclick="toggleResultView('analyzed')">Analyzed Overlay</div>
+                                <div class="toggle-opt" id="btn-view-original" onclick="toggleResultView('original')">Original Image</div>
+                            </div>
+                            
+                            <div class="palm-display-frame">
+                                <img src="" id="result-palm-img" class="palm-display-img" alt="Palm scan">
+                            </div>
+                        </div>
+
+                        <!-- Energy Levels Grid -->
+                        <div class="card" style="width: 100%; margin-bottom: 0;">
+                            <h3 style="margin-bottom: 1.25rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-display);">
+                                <i class="fa-solid fa-bolt" style="color: var(--amber);"></i> Aura Energy Profile
+                            </h3>
+                            <div class="energy-profile">
+                                <div class="energy-item">
+                                    <div class="energy-header">
+                                        <span class="energy-name">Vitality</span>
+                                        <span class="energy-val" id="energy-vitality-val">0%</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class="progress-bar" id="energy-vitality-bar"></div>
+                                    </div>
+                                </div>
+                                <div class="energy-item">
+                                    <div class="energy-header">
+                                        <span class="energy-name">Intellect</span>
+                                        <span class="energy-val" id="energy-intellect-val">0%</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class="progress-bar" id="energy-intellect-bar"></div>
+                                    </div>
+                                </div>
+                                <div class="energy-item">
+                                    <div class="energy-header">
+                                        <span class="energy-name">Emotion</span>
+                                        <span class="energy-val" id="energy-emotion-val">0%</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class="progress-bar" id="energy-emotion-bar"></div>
+                                    </div>
+                                </div>
+                                <div class="energy-item">
+                                    <div class="energy-header">
+                                        <span class="energy-name">Ambition</span>
+                                        <span class="energy-val" id="energy-ambition-val">0%</span>
+                                    </div>
+                                    <div class="progress-track">
+                                        <div class="progress-bar" id="energy-ambition-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Detailed Text Readings & Reports -->
+                    <div class="reading-details-panel">
+                        <!-- Top metrics and badges -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <div class="metrics-summary-bar">
+                                <!-- Circular Indicator -->
+                                <div class="radial-meter">
+                                    <svg width="100" height="100">
+                                        <defs>
+                                            <linearGradient id="cyan-purple-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="var(--secondary)" />
+                                                <stop offset="100%" stop-color="var(--primary)" />
+                                            </linearGradient>
+                                        </defs>
+                                        <circle class="radial-meter-bg" cx="50" cy="50" r="40" />
+                                        <circle class="radial-meter-fill" id="radial-fill" cx="50" cy="50" r="40" />
+                                    </svg>
+                                    <div class="radial-meter-text">
+                                        <div class="radial-meter-num" id="confidence-score-val">0</div>
+                                        <div class="radial-meter-label">Conf %</div>
+                                    </div>
+                                </div>
+
+                                <!-- Hand classifications badges -->
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <h3 id="palm-reading-title" style="font-family: var(--font-display); font-size: 1.25rem;">Hand Matrix</h3>
+                                    <div class="attr-pills">
+                                        <div class="attr-pill" id="badge-hand-label">
+                                            <i class="fa-solid fa-hands"></i> Left Hand
+                                        </div>
+                                        <div class="attr-pill element" id="badge-palm-shape">
+                                            <i class="fa-solid fa-mountain"></i> Earth Hand
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personality Analysis Card -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 class="reading-section-title">
+                                <i class="fa-solid fa-user-astronaut"></i> Personality Alignment
+                            </h3>
+                            <p class="reading-text" id="personality-desc">Generating reading...</p>
+                            <ul class="takeaway-list" id="personality-takeaways">
+                                <!-- Takeaways list dynamic injection -->
+                            </ul>
+                        </div>
+
+                        <!-- Career Analysis Card -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 class="reading-section-title">
+                                <i class="fa-solid fa-briefcase"></i> Career & Destiny (Vocation Score: <span id="career-score-text">0</span>/100)
+                            </h3>
+                            <p class="reading-text" id="career-desc">Generating reading...</p>
+                            <ul class="takeaway-list" id="career-takeaways"></ul>
+                        </div>
+
+                        <!-- Relationships Analysis Card -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 class="reading-section-title">
+                                <i class="fa-solid fa-heart"></i> Emotional Attachment Style (Romantic Score: <span id="relationship-score-text">0</span>/100)
+                            </h3>
+                            <p class="reading-text" id="relationships-desc">Generating reading...</p>
+                            <ul class="takeaway-list" id="relationships-takeaways"></ul>
+                        </div>
+
+                        <!-- Lines Breakdown (Accordion) -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 class="reading-section-title" style="margin-bottom: 1rem;">
+                                <i class="fa-solid fa-signature"></i> Anatomical Crease Analysis
+                            </h3>
+                            
+                            <div class="lines-accordion">
+                                <!-- Life Line -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header" onclick="toggleAccordion('life-accordion')">
+                                        <div class="accordion-title-block">
+                                            <div class="line-badge" style="background: var(--emerald);"></div>
+                                            <span class="accordion-title">Life Line (Vitality)</span>
+                                        </div>
+                                        <div class="accordion-summary-stats">
+                                            <span>Len: <strong id="life-len">0</strong></span>
+                                            <span>Dep: <strong id="life-dep">0</strong></span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-content" id="life-accordion">
+                                        <div class="line-metrics-table">
+                                            <div class="metric-cell"><span class="metric-cell-label">Length</span><span class="metric-cell-val" id="life-stat-len">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Depth</span><span class="metric-cell-val" id="life-stat-dep">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Curvature</span><span class="metric-cell-val" id="life-stat-cur">0</span></div>
+                                        </div>
+                                        <p id="life-meaning-text"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Head Line -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header" onclick="toggleAccordion('head-accordion')">
+                                        <div class="accordion-title-block">
+                                            <div class="line-badge" style="background: var(--secondary);"></div>
+                                            <span class="accordion-title">Head Line (Intellect)</span>
+                                        </div>
+                                        <div class="accordion-summary-stats">
+                                            <span>Len: <strong id="head-len">0</strong></span>
+                                            <span>Dep: <strong id="head-dep">0</strong></span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-content" id="head-accordion">
+                                        <div class="line-metrics-table">
+                                            <div class="metric-cell"><span class="metric-cell-label">Length</span><span class="metric-cell-val" id="head-stat-len">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Depth</span><span class="metric-cell-val" id="head-stat-dep">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Curvature</span><span class="metric-cell-val" id="head-stat-cur">0</span></div>
+                                        </div>
+                                        <p id="head-meaning-text"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Heart Line -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header" onclick="toggleAccordion('heart-accordion')">
+                                        <div class="accordion-title-block">
+                                            <div class="line-badge" style="background: #f43f5e;"></div>
+                                            <span class="accordion-title">Heart Line (Emotion)</span>
+                                        </div>
+                                        <div class="accordion-summary-stats">
+                                            <span>Len: <strong id="heart-len">0</strong></span>
+                                            <span>Dep: <strong id="heart-dep">0</strong></span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-content" id="heart-accordion">
+                                        <div class="line-metrics-table">
+                                            <div class="metric-cell"><span class="metric-cell-label">Length</span><span class="metric-cell-val" id="heart-stat-len">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Depth</span><span class="metric-cell-val" id="heart-stat-dep">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Curvature</span><span class="metric-cell-val" id="heart-stat-cur">0</span></div>
+                                        </div>
+                                        <p id="heart-meaning-text"></p>
+                                    </div>
+                                </div>
+
+                                <!-- Fate Line -->
+                                <div class="accordion-item">
+                                    <div class="accordion-header" onclick="toggleAccordion('fate-accordion')">
+                                        <div class="accordion-title-block">
+                                            <div class="line-badge" style="background: #a855f7;"></div>
+                                            <span class="accordion-title">Fate Line (Destiny)</span>
+                                        </div>
+                                        <div class="accordion-summary-stats">
+                                            <span>Len: <strong id="fate-len">0</strong></span>
+                                            <span>Dep: <strong id="fate-dep">0</strong></span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                    <div class="accordion-content" id="fate-accordion">
+                                        <div class="line-metrics-table">
+                                            <div class="metric-cell"><span class="metric-cell-label">Length</span><span class="metric-cell-val" id="fate-stat-len">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Depth</span><span class="metric-cell-val" id="fate-stat-dep">0</span></div>
+                                            <div class="metric-cell"><span class="metric-cell-label">Curvature</span><span class="metric-cell-val" id="fate-stat-cur">0</span></div>
+                                        </div>
+                                        <p id="fate-meaning-text"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mounts Breakdown Card -->
+                        <div class="card" style="margin-bottom: 0;">
+                            <h3 class="reading-section-title">
+                                <i class="fa-solid fa-meteor"></i> Mount Prominence Analysis
+                            </h3>
+                            <div class="mounts-grid" id="mounts-details-box">
+                                <!-- Mount cards dynamic inject -->
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" onclick="resetAnalyzer()">
+                                <i class="fa-solid fa-arrow-rotate-left"></i> Scan Another Palm
+                            </button>
+                            <button class="btn" onclick="window.print()">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Reading History Tab -->
+            <div id="history-tab" class="tab-panel">
+                <header>
+                    <div>
+                        <h1>Reading History</h1>
+                        <p class="subtitle">Access and review all past palm scans stored in your local database.</p>
+                    </div>
+                </header>
+
+                <div class="history-grid" id="history-grid-box">
+                    <!-- Dynamic history content -->
+                </div>
+            </div>
+
+            <!-- 3. Setup Info Tab -->
+            <div id="setup-tab" class="tab-panel">
+                <header>
+                    <div>
+                        <h1>Local AI Server Configuration</h1>
+                        <p class="subtitle">Integrate Ollama to enable fully offline multimodal deep readings.</p>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-circle-play" style="color: var(--primary);"></i> Setup Guide</h3>
+                    <p style="color: var(--text-muted); line-height: 1.5;">To use a true local AI LLM or Multimodal vision model instead of the default local CV heuristics rule engine, follow these steps:</p>
+                    
+                    <div class="setup-guide-list">
+                        <div class="guide-step">
+                            <div class="guide-step-num">1</div>
+                            <div class="guide-step-body">
+                                <span class="guide-step-title">Install Ollama</span>
+                                <span class="guide-step-desc">Download and install Ollama from <a href="https://ollama.com" target="_blank" style="color: var(--secondary);">ollama.com</a> for Windows, macOS, or Linux.</span>
+                            </div>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="guide-step-num">2</div>
+                            <div class="guide-step-body">
+                                <span class="guide-step-title">Download local Vision Model (Recommended)</span>
+                                <span class="guide-step-desc">Open your terminal and pull a high-performance vision model (e.g. Qwen2-VL or Llava):</span>
+                                <div class="code-block">
+                                    <span>ollama run qwen2-vl</span>
+                                    <button onclick="navigator.clipboard.writeText('ollama run qwen2-vl')"><i class="fa-regular fa-copy"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guide-step">
+                            <div class="guide-step-num">3</div>
+                            <div class="guide-step-body">
+                                <span class="guide-step-title">Start the Ollama Server</span>
+                                <span class="guide-step-desc">Ollama runs automatically in the background at <code>http://localhost:11434</code>. The server will detect and route request workloads locally on CPU or GPU.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1.25rem;"><i class="fa-solid fa-sliders" style="color: var(--secondary);"></i> Server Settings</h3>
+                    
+                    <div class="config-input-group" style="margin-bottom: 1.5rem;">
+                        <label for="ollama-url-input">Ollama Local API Endpoint</label>
+                        <div class="config-input-wrapper">
+                            <input type="text" id="ollama-url-input" class="config-input" value="http://localhost:11434">
+                            <button class="btn" style="flex-grow: 0; min-width: 140px;" onclick="testOllamaConnection()">
+                                <i class="fa-solid fa-arrows-rotate"></i> Test Status
+                            </button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-dark); margin-top: 4px;">If Ollama runs on a separate PC in your local network, change this IP.</p>
+                    </div>
+
+                    <div class="config-input-group">
+                        <label for="api-url-input">FastAPI Backend Server URL</label>
+                        <div class="config-input-wrapper">
+                            <input type="text" id="api-url-input" class="config-input" placeholder="e.g. https://my-palm-backend.render.com">
+                            <button class="btn" style="flex-grow: 0; min-width: 140px;" onclick="saveBackendApiUrl()">
+                                <i class="fa-solid fa-floppy-disk"></i> Save URL
+                            </button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-dark); margin-top: 4px;">Leave blank to use relative paths (default). Enter your deployed backend container URL if you host the static frontend on Netlify.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State variables
+        let cameraStream = null;
+        let originalImgUrl = "";
+        let analyzedImgUrl = "";
+        let currentOllamaUrl = "http://localhost:11434";
+        
+        function getApiPrefix() {
+            const savedUrl = localStorage.getItem('backend_api_url');
+            if (savedUrl) {
+                const cleanUrl = savedUrl.replace(/\/+$/, "");
+                return `${cleanUrl}/api/v1`;
+            }
+            return "/api/v1";
+        }
+        let API_PREFIX = getApiPrefix();
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            // Highlight button
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Stop camera if navigating away from scan-tab
+            if (tabId !== 'scan-tab') {
+                stopCamera();
+            }
+
+            // Run tab specific updates
+            if (tabId === 'history-tab') {
+                loadHistory();
+            }
+        }
+
+        // Accordion Management
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = content.previousElementSibling.querySelector('.fa-chevron-down');
+            
+            const isOpen = content.classList.contains('active');
+            
+            // Close all
+            document.querySelectorAll('.accordion-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.accordion-header i.fa-chevron-down').forEach(i => i.style.transform = 'rotate(0deg)');
+
+            if (!isOpen) {
+                content.classList.add('active');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Result View Toggle (Original vs overlay)
+        function toggleResultView(type) {
+            const btnAnal = document.getElementById('btn-view-analyzed');
+            const btnOrig = document.getElementById('btn-view-original');
+            const resultImg = document.getElementById('result-palm-img');
+
+            if (type === 'original') {
+                btnAnal.classList.remove('active');
+                btnOrig.classList.add('active');
+                resultImg.src = originalImgUrl;
+            } else {
+                btnOrig.classList.remove('active');
+                btnAnal.classList.add('active');
+                resultImg.src = analyzedImgUrl;
+            }
+        }
+
+        // Camera Management
+        async function startCamera() {
+            const video = document.getElementById('camera-video');
+            const toggleBtn = document.getElementById('toggle-camera-btn');
+            const captureBtn = document.getElementById('capture-photo-btn');
+            
+            if (cameraStream) {
+                stopCamera();
+                return;
+            }
+
+            try {
+                // Request access to rear camera if possible, or any default camera
+                const constraints = {
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 960 }
+                    }
+                };
+                
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = cameraStream;
+                toggleBtn.innerHTML = '<i class="fa-solid fa-video-slash"></i> Stop Camera';
+                toggleBtn.classList.add('btn-secondary');
+                captureBtn.disabled = false;
+            } catch (err) {
+                console.error("Camera access error:", err);
+                alert("Camera access denied or unavailable. Please upload a file instead.");
+            }
+        }
+
+        function stopCamera() {
+            const video = document.getElementById('camera-video');
+            const toggleBtn = document.getElementById('toggle-camera-btn');
+            const captureBtn = document.getElementById('capture-photo-btn');
+
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            video.srcObject = null;
+            toggleBtn.innerHTML = '<i class="fa-solid fa-power-off"></i> Start Camera';
+            toggleBtn.classList.remove('btn-secondary');
+            captureBtn.disabled = true;
+        }
+
+        async function capturePhoto() {
+            if (!cameraStream) return;
+
+            const video = document.getElementById('camera-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            // Draw mirrored image to match video mirroring
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Stop camera
+            stopCamera();
+
+            // Convert canvas content to Blob and trigger upload
+            canvas.toBlob(blob => {
+                const file = new File([blob], "captured_palm.jpg", { type: "image/jpeg" });
+                uploadPalmImage(file);
+            }, 'image/jpeg', 0.95);
+        }
+
+        // File Selection
+        function triggerFileInput() {
+            document.getElementById('file-input').click();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                uploadPalmImage(file);
+            }
+        }
+
+        // Dropzone listeners
+        const dropZone = document.getElementById('drop-zone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                uploadPalmImage(file);
+            }
+        });
+
+        // API Upload and Processing
+        async function uploadPalmImage(file) {
+            // Hide error alert
+            document.getElementById('scan-error-alert').style.display = 'none';
+
+            // Show loading phase
+            document.getElementById('input-phase').style.display = 'none';
+            document.getElementById('processing-phase').style.display = 'flex';
+            
+            updateLoadingStep('step-quality', 'active');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Simulate step timing visually to engage users (since backend is fast)
+                setTimeout(() => updateLoadingStep('step-quality', 'done'), 800);
+                setTimeout(() => updateLoadingStep('step-landmarks', 'active'), 900);
+                setTimeout(() => updateLoadingStep('step-landmarks', 'done'), 2000);
+                setTimeout(() => updateLoadingStep('step-opencv', 'active'), 2100);
+                setTimeout(() => updateLoadingStep('step-opencv', 'done'), 3200);
+                setTimeout(() => updateLoadingStep('step-llm', 'active'), 3300);
+
+                const response = await fetch(`${API_PREFIX}/analyze`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Server error processing image.");
+                }
+
+                const data = await response.json();
+                
+                // Finalize step indicators
+                updateLoadingStep('step-llm', 'done');
+                
+                // Load details into DOM
+                setTimeout(() => renderResults(data), 600);
+
+            } catch (err) {
+                console.error("Scanning failed:", err);
+                
+                // Reset views
+                document.getElementById('processing-phase').style.display = 'none';
+                document.getElementById('input-phase').style.display = 'grid';
+                
+                // Show error message
+                const errBox = document.getElementById('scan-error-alert');
+                const errMsg = document.getElementById('scan-error-message');
+                errMsg.innerText = err.message;
+                errBox.style.display = 'flex';
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function updateLoadingStep(stepId, state) {
+            const stepEl = document.getElementById(stepId);
+            if (!stepEl) return;
+
+            stepEl.classList.remove('active', 'done');
+            
+            if (state === 'active') {
+                stepEl.classList.add('active');
+                stepEl.querySelector('.step-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            } else if (state === 'done') {
+                stepEl.classList.add('done');
+                stepEl.querySelector('.step-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            }
+        }
+
+        // Render Results Panel
+        function renderResults(data) {
+            // Build base URL for static files (remove /api/v1 from API_PREFIX)
+            let staticBaseUrl = "";
+            if (API_PREFIX.startsWith("http")) {
+                staticBaseUrl = API_PREFIX.replace("/api/v1", "");
+            }
+
+            // Set image routes
+            originalImgUrl = data.original_image.startsWith("http") ? data.original_image : (staticBaseUrl + data.original_image);
+            analyzedImgUrl = (data.analyzed_image || data.original_image).startsWith("http") ? (data.analyzed_image || data.original_image) : (staticBaseUrl + (data.analyzed_image || data.original_image));
+            
+            // Set image preview (default to analyzed overlay)
+            const resultImg = document.getElementById('result-palm-img');
+            resultImg.src = analyzedImgUrl;
+            document.getElementById('btn-view-analyzed').classList.add('active');
+            document.getElementById('btn-view-original').classList.remove('active');
+
+            // Set Confidence radial meter
+            const score = Math.round(data.confidence_score);
+            document.getElementById('confidence-score-val').innerText = score;
+            const strokeOffset = 251.2 - (251.2 * score) / 100;
+            document.getElementById('radial-fill').style.strokeDashoffset = strokeOffset;
+
+            // Set badges
+            document.getElementById('badge-hand-label').innerHTML = `<i class="fa-solid fa-hands"></i> ${data.hand_type} Hand`;
+            document.getElementById('badge-palm-shape').innerHTML = `<i class="fa-solid fa-mountain"></i> ${data.palm_shape}`;
+
+            // Set energy progress bars
+            const energy = data.energy_profile;
+            setProgressBar('energy-vitality', energy.vitality);
+            setProgressBar('energy-intellect', energy.intellect);
+            setProgressBar('energy-emotion', energy.emotion);
+            setProgressBar('energy-ambition', energy.ambition);
+
+            // Set detailed cards texts
+            document.getElementById('personality-desc').innerText = data.personality.analysis;
+            renderTakeaways('personality-takeaways', data.personality.key_takeaways);
+
+            document.getElementById('career-desc').innerText = data.career.analysis;
+            document.getElementById('career-score-text').innerText = data.career.score || 50;
+            renderTakeaways('career-takeaways', data.career.key_takeaways);
+
+            document.getElementById('relationships-desc').innerText = data.relationships.analysis;
+            document.getElementById('relationship-score-text').innerText = data.relationships.score || 50;
+            renderTakeaways('relationships-takeaways', data.relationships.key_takeaways);
+
+            // Accordion detail statistics
+            setLineDetails('life', data.life_line);
+            setLineDetails('head', data.head_line);
+            setLineDetails('heart', data.heart_line);
+            if (data.fate_line) {
+                setLineDetails('fate', data.fate_line);
+            } else {
+                setLineDetails('fate', { length: 0, depth: 0, curvature: 0, clarity: "Absent", meaning: "No Fate Line detected. This indicates a flexible, self-made path where career is driven by direct choice rather than linear destiny." });
+            }
+
+            // Render Mount details
+            renderMounts(data.mounts);
+
+            // Toggle panels
+            document.getElementById('processing-phase').style.display = 'none';
+            document.getElementById('results-phase').style.display = 'grid';
+
+            // Scroll down slightly
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+
+        function setProgressBar(prefix, val) {
+            document.getElementById(`${prefix}-val`).innerText = `${val}%`;
+            document.getElementById(`${prefix}-bar`).style.width = `${val}%`;
+        }
+
+        function renderTakeaways(containerId, list) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            list.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'takeaway-item';
+                li.innerText = item;
+                container.appendChild(li);
+            });
+        }
+
+        function setLineDetails(prefix, lineObj) {
+            document.getElementById(`${prefix}-len`).innerText = Math.round(lineObj.length);
+            document.getElementById(`${prefix}-dep`).innerText = Math.round(lineObj.depth);
+            
+            document.getElementById(`${prefix}-stat-len`).innerText = `${Math.round(lineObj.length)}%`;
+            document.getElementById(`${prefix}-stat-dep`).innerText = `${Math.round(lineObj.depth)}%`;
+            document.getElementById(`${prefix}-stat-cur`).innerText = `${Math.round(lineObj.curvature)}%`;
+            
+            document.getElementById(`${prefix}-meaning-text`).innerHTML = `<strong>(${lineObj.clarity})</strong>: ${lineObj.meaning}`;
+        }
+
+        function renderMounts(mountsObj) {
+            const container = document.getElementById('mounts-details-box');
+            container.innerHTML = "";
+            for (const [name, desc] of Object.entries(mountsObj)) {
+                let badgeClass = "quiet";
+                let status = "Quiet";
+                if (desc.includes("Prominent")) {
+                    badgeClass = "prominent";
+                    status = "Prominent";
+                } else if (desc.includes("Balanced")) {
+                    badgeClass = "balanced";
+                    status = "Balanced";
+                }
+
+                const card = document.createElement('div');
+                card.className = 'mount-card';
+                card.innerHTML = `
+                    <span class="mount-name">${name}</span>
+                    <span class="mount-badge ${badgeClass}">${status}</span>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function resetAnalyzer() {
+            // Clear inputs
+            document.getElementById('file-input').value = "";
+            
+            // Toggle panels
+            document.getElementById('results-phase').style.display = 'none';
+            document.getElementById('input-phase').style.display = 'grid';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // History Management
+        async function loadHistory() {
+            const grid = document.getElementById('history-grid-box');
+            grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem;"></i></div>';
+
+            try {
+                const response = await fetch(`${API_PREFIX}/history`);
+                if (!response.ok) throw new Error("Could not fetch history list.");
+                
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    grid.innerHTML = `
+                        <div class="empty-history-state">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <h3>No readings saved yet</h3>
+                            <p>Once you run a palm analysis scan, the results will appear here locally.</p>
+                            <button class="btn" onclick="switchTab('scan-tab')" style="margin-top: 1rem; width: auto;">Scan First Palm</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = "";
+                let staticBaseUrl = "";
+                if (API_PREFIX.startsWith("http")) {
+                    staticBaseUrl = API_PREFIX.replace("/api/v1", "");
+                }
+
+                data.forEach(item => {
+                    const date = new Date(item.created_at).toLocaleDateString(undefined, { 
+                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                    });
+
+                    const imgUrl = (item.analyzed_image || item.original_image).startsWith("http") ? 
+                        (item.analyzed_image || item.original_image) : 
+                        (staticBaseUrl + (item.analyzed_image || item.original_image));
+
+                    const card = document.createElement('div');
+                    card.className = 'history-card';
+                    card.innerHTML = `
+                        <div class="history-img-frame">
+                            <img class="history-img" src="${imgUrl}" alt="Scan thumb">
+                        </div>
+                        <div class="history-content">
+                            <div class="history-meta">
+                                <span class="history-date">${date}</span>
+                                <span class="history-score">${Math.round(item.confidence_score)}% Match</span>
+                            </div>
+                            <h4 class="history-title">${item.palm_shape.split(' ')[0]} hand</h4>
+                            <p class="history-desc">Identified hand: <strong>${item.hand_type}</strong></p>
+                            <div class="history-actions">
+                                <button class="btn btn-secondary history-btn-view" onclick="viewHistoryDetail(${item.id})">
+                                    <i class="fa-solid fa-eye"></i> View Analysis
+                                </button>
+                                <button class="history-btn-del" title="Delete record" onclick="deleteHistory(${item.id}, this.closest('.history-card'))">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (err) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dark); padding: 3rem;"><i class="fa-solid fa-triangle-exclamation"></i> Error loading history: ${err.message}</div>`;
+            }
+        }
+
+        async function viewHistoryDetail(id) {
+            try {
+                const response = await fetch(`${API_PREFIX}/history/${id}`);
+                if (!response.ok) throw new Error("Could not load details.");
+                
+                const data = await response.json();
+                
+                // Render details
+                renderResults(data);
+                
+                // Switch back to Scan Tab (where results display)
+                switchTab('scan-tab');
+            } catch (err) {
+                alert(`Error opening reading: ${err.message}`);
+            }
+        }
+
+        async function deleteHistory(id, cardElement) {
+            if (!confirm("Are you sure you want to permanently delete this palm reading from your local database?")) return;
+
+            try {
+                const response = await fetch(`${API_PREFIX}/history/${id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error("Failed to delete record.");
+                
+                // Remove element from UI
+                cardElement.style.opacity = '0';
+                setTimeout(() => {
+                    cardElement.remove();
+                    // If history is now empty, reload history to trigger empty state screen
+                    if (document.querySelectorAll('.history-card').length === 0) {
+                        loadHistory();
+                    }
+                }, 300);
+            } catch (err) {
+                alert(`Error deleting record: ${err.message}`);
+            }
+        }
+
+        // Ollama Connection Checks
+        async function testOllamaConnection() {
+            const input = document.getElementById('ollama-url-input');
+            const val = input.value.trim();
+            
+            const dot = document.getElementById('ollama-status-dot');
+            const text = document.getElementById('ollama-status-text');
+            
+            text.innerText = "Connecting to Ollama...";
+            dot.className = "status-dot offline";
+
+            try {
+                const response = await fetch(`${val}/api/tags`, { method: 'GET' });
+                if (response.ok) {
+                    const data = await response.json();
+                    dot.className = "status-dot";
+                    text.innerHTML = `Ollama Online (${data.models.length} models)`;
+                    currentOllamaUrl = val;
+                    alert(`Success! Local Ollama server connected at ${val}. Found ${data.models.length} models.`);
+                } else {
+                    throw new Error("Ollama endpoint responded with error status.");
+                }
+            } catch (err) {
+                dot.className = "status-dot offline";
+                text.innerText = "Ollama Offline";
+                alert(`Could not connect to Ollama at ${val}. Make sure Ollama is running and CORS allows origins. Fallback rules engine will continue to handle requests.`);
+            }
+        }
+
+        async function checkStatusStartup() {
+            // Check Ollama quietly
+            const dot = document.getElementById('ollama-status-dot');
+            const text = document.getElementById('ollama-status-text');
+
+            try {
+                const response = await fetch(`http://localhost:11434/api/tags`);
+                if (response.ok) {
+                    const data = await response.json();
+                    dot.className = "status-dot";
+                    text.innerHTML = `Ollama Online (${data.models.length} models)`;
+                } else {
+                    dot.className = "status-dot offline";
+                    text.innerText = "Ollama Offline";
+                }
+            } catch (err) {
+                dot.className = "status-dot offline";
+                text.innerText = "Ollama Offline (Using Rules Engine)";
+            }
+        }
+
+        function saveBackendApiUrl() {
+            const input = document.getElementById('api-url-input');
+            const val = input.value.trim();
+            if (val) {
+                localStorage.setItem('backend_api_url', val);
+                alert(`Backend API URL saved: ${val}. All requests will now be routed here.`);
+            } else {
+                localStorage.removeItem('backend_api_url');
+                alert("Reset to default relative API paths.");
+            }
+            API_PREFIX = getApiPrefix();
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            checkStatusStartup();
+            
+            // Set saved API URL
+            const savedApi = localStorage.getItem('backend_api_url');
+            if (savedApi) {
+                document.getElementById('api-url-input').value = savedApi;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: aurapalm-ai-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./static:/app/static
+    environment:
+      # Use host.docker.internal to access Ollama running on the host OS
+      - OLLAMA_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen2.5:7b
+      - VISION_MODEL=qwen2-vl:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
